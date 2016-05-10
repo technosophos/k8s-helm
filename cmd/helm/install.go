@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -66,7 +65,7 @@ func printRelease(rel *release.Release) {
 	}
 	fmt.Printf("release.name:   %s\n", rel.Name)
 	if verbose {
-		fmt.Printf("release.info:   %s %s\n", timeconv.Format(rel.Info.LastDeployed, time.ANSIC), rel.Info.Status)
+		fmt.Printf("release.info:   %s %s\n", timeconv.String(rel.Info.LastDeployed), rel.Info.Status)
 		fmt.Printf("release.chart:  %s %s\n", rel.Chart.Metadata.Name, rel.Chart.Metadata.Version)
 		fmt.Printf("release.manifest: %s\n", rel.Manifest)
 	}
