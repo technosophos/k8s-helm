@@ -2,22 +2,30 @@
 
 This document describes the Helm architecture at a high level.
 
+Helm is a package manager for Kubernetes that resembles operating system
+package managers like `apt`, `yum`, and `homebrew`. Packages are called
+_charts_, and Helm is a tool for managing Kubernetes resources using
+charts.
+
 ## The Purpose of Helm
 
-Helm is a tool for managing Kubernetes packages called _charts_. Helm
-can do the following:
+Helm can do the following:
 
-- Create new charts from scratch
-- Package charts into chart archive (tgz) files
-- Interact with chart repositories where charts are stored
-- Install and uninstall charts into an existing Kubernetes cluster
-- Manage the releases of charts that have been installed with Helm
+- Install and manage packaged Kubernetes resources
+  - Search for existing charts
+  - Install and uninstall charts into an existing Kubernetes cluster
+  - Manage the releases of charts that have been installed with Helm
+- Create and manage packages of Kubernetes resources
+  - Create new charts from scratch
+  - Package charts into chart archive (tgz) files
+  - Interact with chart repositories where charts are stored
 
 For Helm, there are three important concepts:
 
 1. The _chart_ is a bundle of information necessary to create an
-   instance of a Kubernetes application.
-2. The _config_ contains configuration information that can be merged
+   instance of a Kubernetes application. This is done by expanding a
+   chart into Kubernetes resources.
+2. The _config_ (_values_) contains configuration information that can be merged
    into a packaged chart to create a releasable object.
 3. A _release_ is a running instance of a _chart_, combined with a
    specific _config_.

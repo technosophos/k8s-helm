@@ -7,6 +7,7 @@ Helm and Tiller.
 
 - Go 1.6.0 or later
 - Glide 0.10.2 or later
+- Git and Mercurial (used by Go tools)
 - kubectl 1.2 or later
 - A Kubernetes cluster (optional)
 - The gRPC toolchain
@@ -33,7 +34,13 @@ To run Helm and Tiller locally, you can run `bin/helm` or `bin/tiller`.
 
 ## gRPC and Protobuf
 
-Helm and Tiller communicate using gRPC. To get started with gRPC, you will need to...
+Helm and Tiller communicate using gRPC. Generated gRPC files are
+_always_ checked into VCS. So unless you are changing proto definitions,
+you do not need the protobuf CLI tools. However, if you are changing the
+files in `_proto`, you will need to configure your environment according
+to the instructions here.
+
+To get started with gRPC, you will need to...
 
 - Install `protoc` for compiling protobuf files. Releases are
   [here](https://github.com/google/protobuf/releases)
