@@ -17,6 +17,7 @@ It has these top-level messages:
 	Value
 	Maintainer
 	Metadata
+	TemplateEngine
 	Template
 */
 package chart

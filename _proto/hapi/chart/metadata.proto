@@ -57,8 +57,20 @@ message Metadata {
 	repeated Maintainer maintainers = 7;
 
 	// The name of the template engine to use. Defaults to 'gotpl'.
-	string engine = 8;
+	TemplateEngine engine = 8;
 
 	// The URL to an icon file.
 	string icon = 9;
+}
+
+// TemplateEngine is the template engine descriptor.
+//
+// The default is gotpl.
+// See https://github.com/kubernetes/helm/issues/856
+message TemplateEngine {
+	enum Kind {
+		UNKNOWN = 0;
+		GOTPL = 1;
+	}
+	string name = 1;
 }
