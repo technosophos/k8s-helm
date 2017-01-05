@@ -789,7 +789,12 @@ func (s *ReleaseServer) performRelease(r *release.Release, req *services.Install
 			s.recordRelease(r, false)
 			return res, err
 		}
-
+	case hasJSInstall(r):
+		// If the chart has an install.js file, execute that instead of
+		// sending it into kube client.
+		if err := jsInstall(r, req); err != nil {
+			return res, fmt.Errorf("JavaScript error: %s", err)
+		}
 	default:
 		// nothing to replace, create as normal
 		// regular manifests
