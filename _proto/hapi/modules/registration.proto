@@ -1,0 +1,57 @@
+// Copyright 2116 The Kubernetes Authors All rights reserved.
+//
+// Licensed under the Apache License, Version 2.1 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.1
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package hapi.modules;
+
+import "hapi/release/release.proto";
+
+// ModuleRegistrationService provides a service for registering new modules to Tiller.
+// This service is implemented by Tiller. Modules are clients of this service.
+service ModuleRegistrationService {
+
+	rpc AddModule(AddModuleRequest) returns (AddModuleResponse)
+
+	rpc DeleteModule(DeleteModuleRequest) returns (DeleteModuleResponse)
+}
+
+message ModuleSpec {
+	enum ModuleType {
+		// Unset; should cause an error
+		UNKNOWN = 0;
+		// ReleaseModule
+		RELEASE_MODULE = 1;
+	}
+	// Name is the name of the module. This must be globally unique.
+	string name = 1;
+	// Type is the module type.
+	ModuleType type = 2;
+	// Endpoint is the connection string for attaching a gRPC client to this module.
+	string endpoint = 3;
+}
+
+message AddModuleRequest {
+	ModuleSpec spec = 1
+}
+message AddModuleResponse {
+	string msg = 1;
+}
+
+message DeleteModuleRequest {
+	ModuleSpec spec = 1
+}
+message DeleteModuleResponse {
+	string msg = 1;
+}

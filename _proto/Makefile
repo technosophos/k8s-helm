@@ -24,10 +24,14 @@ version_ias    = $(subst $(space),$(comma),$(addsuffix =$(import_path)/$(version
 version_pbs    = $(sort $(wildcard hapi/version/*.proto))
 version_pkg    = version
 
+modules_ias  = $(subst $(space),$(comma),$(addsuffix =$(import_path)/$(modules_pkg),$(addprefix M,$(modules_pbs))))
+modules_pbs  = $(sort $(wildcard hapi/modules/*.proto))
+modules_pkg  = modules
+
 google_deps	 = Mgoogle/protobuf/timestamp.proto=github.com/golang/protobuf/ptypes/timestamp,Mgoogle/protobuf/any.proto=github.com/golang/protobuf/ptypes/any
 
 .PHONY: all
-all: chart release services version
+all: chart release services version modules
 
 chart:
 	PATH=../bin:$(PATH) protoc --$(target)_out=plugins=$(plugins),$(google_deps),$(chart_ias):$(dst) $(chart_pbs)
@@ -40,6 +44,9 @@ services:
 
 version:
 	PATH=../bin:$(PATH) protoc --$(target)_out=plugins=$(plugins),$(google_deps):$(dst) $(version_pbs)
+
+modules:
+	PATH=../bin:$(PATH) protoc --$(target)_out=plugins=$(plugins),$(google_deps),$(chart_ias),$(version_ias):$(dst) $(modules_pbs)
 
 .PHONY: clean
 clean:
