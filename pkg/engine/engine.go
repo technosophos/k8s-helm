@@ -80,6 +80,8 @@ func FuncMap() template.FuncMap {
 		// late-bound to a template. By declaring it here, we preserve the
 		// integrity of the linter.
 		"include": func(string, interface{}) string { return "not implemented" },
+
+		"func": func(string, ...interface{}) string { return "not implemented" },
 	}
 
 	for k, v := range extra {
@@ -138,6 +140,17 @@ func (e *Engine) alterFuncMap(t *template.Template) template.FuncMap {
 	funcMap["include"] = func(name string, data interface{}) string {
 		buf := bytes.NewBuffer(nil)
 		if err := t.ExecuteTemplate(buf, name, data); err != nil {
+			buf.WriteString(err.Error())
+		}
+		return buf.String()
+	}
+
+	funcMap["func"] = func(name string, args ...interface{}) string {
+		vals := map[string][]interface{}{
+			"Args": args,
+		}
+		buf := bytes.NewBuffer(nil)
+		if err := t.ExecuteTemplate(buf, name, vals); err != nil {
 			buf.WriteString(err.Error())
 		}
 		return buf.String()
