@@ -24,9 +24,10 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+	//"github.com/spf13/pflag"
 
 	helm_env "k8s.io/helm/pkg/helm/environment"
+	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/plugin"
 )
 
@@ -42,15 +43,10 @@ func loadPlugins(baseCmd *cobra.Command, out io.Writer) {
 		return
 	}
 
-	// manually handel processing of HELM_HOME and --home
-	helmHome := "$HOME/.helm"
-	if h, ok := os.LookupEnv("HELM_HOME"); ok {
-		helmHome = h
-	}
-
-	fs := pflag.NewFlagSet("homer", pflag.ContinueOnError)
-	fs.StringVar((*string)(&settings.Home), "home", helmHome, "location of your Helm config. Overrides $HELM_HOME")
-	fs.Parse(os.Args)
+	//fs := pflag.NewFlagSet("homer", pflag.ContinueOnError)
+	//fs.StringVar((*string)(&settings.Home), "home", helmHome, "location of your Helm config. Overrides $HELM_HOME")
+	//fs.Parse(os.Args)
+	presetHome(os.Args)
 
 	found, err := findPlugins(settings.PluginDirs())
 	if err != nil {
@@ -143,6 +139,9 @@ func manuallyProcessArgs(args []string) ([]string, []string) {
 		case "--debug":
 			known = append(known, a)
 		case "--host", "--kube-context", "--home":
+			if len(args) <= i+1 {
+				break
+			}
 			known = append(known, a, args[i+1])
 			i++
 		default:
@@ -154,6 +153,27 @@ func manuallyProcessArgs(args []string) ([]string, []string) {
 		}
 	}
 	return known, unknown
+}
+
+// presetHome pre-sets Helm home before the regular parsing starts.
+func presetHome(args []string) {
+	// manually handel processing of HELM_HOME and --home
+	helmHome := "$HOME/.helm"
+	if h, ok := os.LookupEnv("HELM_HOME"); ok {
+		helmHome = h
+	}
+
+	for i, arg := range args {
+		if arg == "--home" {
+			if len(args) <= i+1 {
+				break
+			}
+			helmHome = args[i+1]
+		} else if strings.HasPrefix(arg, "--home=") {
+			helmHome = strings.TrimPrefix(arg, "--home=")
+		}
+	}
+	settings.Home = helmpath.Home(helmHome)
 }
 
 // findPlugins returns a list of YAML files that describe plugins.
