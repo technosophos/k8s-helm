@@ -25,16 +25,30 @@ import (
 	"github.com/pkg/errors"
 
 	"k8s.io/helm/pkg/chartutil"
+	libevents "k8s.io/helm/pkg/events"
+	"k8s.io/helm/pkg/events/lua"
 	"k8s.io/helm/pkg/hapi"
 	"k8s.io/helm/pkg/hapi/release"
 	"k8s.io/helm/pkg/hooks"
 	relutil "k8s.io/helm/pkg/releaseutil"
+
+	luavm "github.com/yuin/gopher-lua"
 )
 
 // InstallRelease installs a release and stores the release record.
 func (s *ReleaseServer) InstallRelease(req *hapi.InstallReleaseRequest) (*release.Release, error) {
 	s.Log("preparing install for %s", req.Name)
-	rel, err := s.prepareRelease(req)
+
+	// This will be our VM. Realistically, it should probably be injected from
+	// somewhere else. But for now we create it here.
+	vm := luavm.NewState()
+	emitter := libevents.New()
+	lua.Bind(vm, emitter)
+	if err := lua.LoadScripts(vm, req.Chart); err != nil {
+		return nil, err
+	}
+
+	rel, err := s.prepareRelease(req, emitter)
 	if err != nil {
 		// On dry run, append the manifest contents to a failed release. This is
 		// a stop-gap until we can revisit an error backchannel post-2.0.
@@ -50,7 +64,7 @@ func (s *ReleaseServer) InstallRelease(req *hapi.InstallReleaseRequest) (*releas
 }
 
 // prepareRelease builds a release for an install operation.
-func (s *ReleaseServer) prepareRelease(req *hapi.InstallReleaseRequest) (*release.Release, error) {
+func (s *ReleaseServer) prepareRelease(req *hapi.InstallReleaseRequest, emitter *libevents.Emitter) (*release.Release, error) {
 	if req.Chart == nil {
 		return nil, errMissingChart
 	}
@@ -73,6 +87,18 @@ func (s *ReleaseServer) prepareRelease(req *hapi.InstallReleaseRequest) (*releas
 	}
 	valuesToRender, err := chartutil.ToRenderValuesCaps(req.Chart, req.Values, options, caps)
 	if err != nil {
+		return nil, err
+	}
+
+	coalescedValues, _ := chartutil.CoalesceValues(req.Chart, req.Values)
+	ctx := &libevents.Context{
+		Chart:        req.Chart.Metadata,
+		Release:      options,
+		Values:       coalescedValues,
+		Capabilities: *caps,
+		Files:        chartutil.NewFiles(req.Chart.Files),
+	}
+	if err := emitter.Emit(libevents.EventPreRender, ctx); err != nil {
 		return nil, err
 	}
 
@@ -119,7 +145,25 @@ func (s *ReleaseServer) prepareRelease(req *hapi.InstallReleaseRequest) (*releas
 		rel.Info.Notes = notesTxt
 	}
 
-	err = validateManifest(s.KubeClient, req.Namespace, manifestDoc.Bytes())
+	ctx = &libevents.Context{
+		Chart:        req.Chart.Metadata,
+		Release:      options,
+		Values:       coalescedValues,
+		Capabilities: *caps,
+		Files:        chartutil.NewFiles(req.Chart.Files),
+		Notes:        notesTxt,
+		Manifests:    strings.Split(rel.Manifest, "\n---\n"),
+		// Need to fix how we pass this in.
+		//Hooks:     hooks,
+	}
+	if err := emitter.Emit(libevents.EventPostRender, ctx); err != nil {
+		return rel, err
+	}
+
+	// Copy a few things back
+	rel.Manifest = strings.Join(ctx.Manifests, "\n---\n")
+	rel.Info.Notes = ctx.Notes
+	err = validateManifest(s.KubeClient, req.Namespace, []byte(rel.Manifest))
 	return rel, err
 }
 

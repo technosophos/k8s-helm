@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 
 	"k8s.io/helm/pkg/chartutil"
+	libevents "k8s.io/helm/pkg/events"
 	"k8s.io/helm/pkg/hapi"
 	"k8s.io/helm/pkg/hapi/release"
 	"k8s.io/helm/pkg/hooks"
@@ -157,7 +158,7 @@ func (s *ReleaseServer) performUpdateForce(req *hapi.UpdateReleaseRequest) (*rel
 		ReuseName:    true,
 		Timeout:      req.Timeout,
 		Wait:         req.Wait,
-	})
+	}, libevents.New())
 	if err != nil {
 		// On dry run, append the manifest contents to a failed release. This is
 		// a stop-gap until we can revisit an error backchannel post-2.0.

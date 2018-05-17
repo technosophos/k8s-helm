@@ -1,4 +1,5 @@
 BINDIR     := $(CURDIR)/bin
+BINNAME    := helm3
 DIST_DIRS  := find * -type d -exec
 TARGETS    := darwin/amd64 linux/amd64 linux/386 linux/arm linux/arm64 linux/ppc64le windows/amd64
 
@@ -41,7 +42,7 @@ all: build
 
 .PHONY: build
 build:
-	$(GO) build $(GOFLAGS) -tags '$(TAGS)' -ldflags '$(LDFLAGS)' -o $(BINDIR)/helm k8s.io/helm/cmd/helm
+	$(GO) build $(GOFLAGS) -tags '$(TAGS)' -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(BINNAME) k8s.io/helm/cmd/helm
 
 .PHONY: build-cross
 build-cross: LDFLAGS += -extldflags "-static"

@@ -1,0 +1,1 @@
+This is a chart about {{ .Values.book.title | quote }} by {{ .Values.book.author }}

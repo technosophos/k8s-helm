@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-events
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}-events
+spec:
+  restartPolicy: Never
+  containers:
+  - name: waiter
+    image: "alpine:3.7"
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sleep", "9000"]
