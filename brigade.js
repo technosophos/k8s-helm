@@ -6,9 +6,9 @@ events.on("check_run:rerequested", runSuite);
 
 function runSuite(e, p) {
     runDCO(e, p);
-    runTests(e, p);
-    runDocs(e, p);
-    runAnalytics(e, p);
+    //runTests(e, p);
+    //runDocs(e, p);
+    //runAnalytics(e, p);
 }
 
 // Run tests and fail if the tests do not pass.
@@ -54,45 +54,40 @@ function runAnalytics(e, p) {
 }
 
 // Not as cool as runDMC.
-function runDCO(e, p) {    
+function runDCO(e, p) {
+    console.log(e.payload);
     const ghData = JSON.parse(e.payload);
     var dco = new Notification("dco", e, p);
     dco.title = "Developer Certificate of Origin (DCO)"
 
     // TODO: this should be a regexp.
-    const signedOff = ghData.check_suite.head_commit.message.indexOf("Signed off by:")
+    const signedOff = ghData.body.check_suite.head_commit.message.indexOf("Signed off by:")
     if (signedOff == -1){
         dco.summary = "DCO check failed: Not signed off."
         dco.text = "This commit is inelligible for merging until it is signed off. https://developercertificate.org/";
         dco.conclusion = "failure";
-
-        console.log(dco.summary);
-        return dco.run();
+    } else {
+        dco.summary = "DCO check succeeded";
+        dco.conclusion = "succeeded";
     }
-    dco.summary = "DCO check succeeded";
-    dco.conclusion = "succeeded";
-
+    
+    console.log(dco.summary);
     return dco.run();
 }
 
 class Notification {
-    // One of: "succeeded", "failure", "neutral", "canceled", or "timed_out".
-    conclusion = "neutral";
-    name = "brigade";
-    title = "running check";
-    summary = "";
-    text = "";
-    detailsURL = "";
-    exterrnalID = "";
-    proj = {};
-    payload = {};
-
     constructor(name, e, p) {
         this.proj = p;
         this.payload = e.payload;
         this.name = name;
         this.externalID = e.buildID;
         this.detailsURL = `https://azure.github.com/kashti/builds/${ e.buildID }`;
+
+        // One of: "succeeded", "failure", "neutral", "canceled", or "timed_out".
+        this.conclusion = "neutral";
+        this.title = "runninc check";
+        this.text = "";
+        this.summary = ""
     }
 
     // Send a new notification, and return a Promise<result>.
@@ -113,15 +108,13 @@ class Notification {
 }
 
 class GoJob extends Job {
-    e = {};
-    project = {};
+    constructor(name, e, project) {
+        super(name, "golang:1.9");
 
-    construct(name, e, project) {
         this.e = e;
         this.project = project;
         const gopath = "/go"
         const localPath = gopath + "/src/github.com/" + project.repo.name;
-        super(name, "golang:1.9");
         this.tasks = [
             "go get github.com/golang/dep/cmd/dep",
             "mkdir -p " + localPath,
